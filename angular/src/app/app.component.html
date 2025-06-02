@@ -1,0 +1,38 @@
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container-fluid">
+    <span class="navbar-brand mb-0 h1">To do List</span>
+  </div>
+</nav>
+<form class="container mt-3">
+  <h1>Lista de Tarefas</h1>
+  <div class="row g-3 align-items-center">
+    <div class="col-9 ">
+      <input type="text" name="novaTarefa" class="form-control" id="novaTarefa" [(ngModel)]="novaDescricao"
+        placeholder="Digite a tarefa...">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary" (click)="adicionarTarefa()">Adicionar tarefa</button>
+    </div>
+  </div>
+  <div class="mt-3">
+    <ul class="list-group">
+      <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let tarefa of listaTarefas">
+        <span *ngIf="tarefaEditando !== tarefa" [class.text-decoration-line-through]="tarefa.concluida"
+          (click)="editarTarefa(tarefa)">
+          {{ tarefa.descricao }}
+        </span>
+        <input *ngIf="tarefaEditando === tarefa" type="text" class="form-control me-2" name="descricaoEditando"
+          [(ngModel)]="descricaoEditando" (keyup.enter)="salvarEdicaoTarefa()" (blur)="salvarEdicaoTarefa()"
+          autofocus />
+        <div>
+          <button class="btn btn-success btn-sm"
+            (click)="concluirDesconcluirTarefa(tarefa)">{{labelConcluir(tarefa.concluida)}}</button>
+          <span class="ms-2"></span>
+          <button class="btn btn-danger btn-sm" (click)="removerTarefa(tarefa)">Remover</button>
+          <button *ngIf="tarefaEditando === tarefa" class="btn btn-secondary btn-sm ms-2"
+            (click)="cancelarEdicaoTarefa()">Cancelar</button>
+        </div>
+      </li>
+    </ul>
+  </div>
+</form>

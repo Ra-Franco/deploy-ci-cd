@@ -1,0 +1,25 @@
+# Node e Angular
+/angular/node_modules
+/dist
+/angular/dist
+/server/node_modules
+/angular/.angular
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log
+
+# IDEs
+.vscode/
+.idea/
+
+# Docker
+.env
+docker-compose.override.yml
+
+# GitHub Actions
+.github/workflows/.cache/
+
+# SonarQube
+/.scannerwork/
