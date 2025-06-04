@@ -39,16 +39,25 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no aluno@201.23.3.86 << 'EOF'
             cd ~/todo-deploy
+
+            # Subir SonarQube
             docker rm -f sonar || true
             docker run -d --name sonar -p 8203:9000 sonarqube:latest
+
             echo "Esperando o SonarQube iniciar..."
             sleep 60
-            sonar-scanner \
-              -Dsonar.projectKey=todo-app \
-              -Dsonar.sources=. \
-              -Dsonar.host.url=http://localhost:8203 \
-              -Dsonar.login=admin \
-              -Dsonar.password=admin || { echo "Análise SonarQube falhou"; exit 1; }
+
+            # Executar sonar-scanner via container apontando para o SonarQube
+            docker run --rm \
+              -v "$(pwd)":/usr/src \
+              -e SONAR_HOST_URL="http://172.30.0.28:8203" \
+              -e SONAR_SCANNER_OPTS="-Dsonar.projectKey=todo-app \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.login=admin \
+                                    -Dsonar.password=admin" \
+              sonarsource/sonar-scanner-cli || { echo "Análise SonarQube falhou"; docker stop sonar; docker rm sonar; exit 1; }
+
+            # Remover container do SonarQube
             docker stop sonar
             docker rm sonar
           EOF
