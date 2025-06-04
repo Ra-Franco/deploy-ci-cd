@@ -30,11 +30,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Copiar arquivos para o servidor
-        run: |
-          ssh -o StrictHostKeyChecking=no aluno@201.23.3.86 "mkdir -p ~/todo-deploy"
-          scp -r . aluno@201.23.3.86:~/todo-deploy
-
       - name: Rodar análise SonarQube no servidor
         run: |
           ssh -o StrictHostKeyChecking=no aluno@201.23.3.86 << 'EOF'
