@@ -10,12 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Exibir contexto
-        run: |
-          echo "Evento: ${{ github.event_name }}"
-          echo "Branch: ${{ github.ref }}"
-          echo "Repositório: ${{ github.repository }}"
-
       - name: Checkout do código
         uses: actions/checkout@v3
 
@@ -47,23 +41,23 @@ jobs:
             cd ~/todo-deploy
             docker rm -f sonar || true
             docker run -d --name sonar -p 8203:9000 sonarqube:latest
-            echo "Esperando Sonar subir..."
-            sleep 30
+            echo "Esperando o SonarQube iniciar..."
+            sleep 60
             sonar-scanner \
               -Dsonar.projectKey=todo-app \
               -Dsonar.sources=. \
               -Dsonar.host.url=http://localhost:8203 \
               -Dsonar.login=admin \
-              -Dsonar.password=admin || { echo "Sonar falhou"; docker stop sonar; docker rm sonar; exit 1; }
+              -Dsonar.password=admin || { echo "Análise SonarQube falhou"; exit 1; }
             docker stop sonar
             docker rm sonar
           EOF
 
-      - name: Deploy no servidor (somente se Sonar passou)
+      - name: Deploy da aplicação no servidor
         run: |
           ssh -o StrictHostKeyChecking=no aluno@201.23.3.86 << 'EOF'
             docker stop todo-app || true
             docker rm todo-app || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/todo-app:latest
-            docker run -d --name todo-app -p 8204:3000 ${{ secrets.DOCKER_USERNAME }}/todo-app:latest
+            docker run -d --name todo-app -p 8204:3000 -p 8205:4200 -p 8202:5432 ${{ secrets.DOCKER_USERNAME }}/todo-app:latest
           EOF
