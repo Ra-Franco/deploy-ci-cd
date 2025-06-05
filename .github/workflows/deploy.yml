@@ -30,14 +30,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Checkout do repositório
-        uses: actions/checkout@v3
       - name: Copiar código e docker-compose para servidor remoto
         uses: appleboy/scp-action@v0.1.4
         with:
           host: 201.23.3.86
           username: aluno
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           source: "."
           target: "~/app"
 
