@@ -30,7 +30,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Rodar análise SonarQube no servidor
+      - name: Iniciar SonarQube no servidor
         run: |
           ssh -o StrictHostKeyChecking=no aluno@201.23.3.86 << 'EOF'
             docker rm -f sonar || true
@@ -52,22 +52,18 @@ jobs:
               docker rm sonar
               exit 1
             fi
-
-            sonar-scanner \
-              -Dsonar.projectKey=todo-app \
-              -Dsonar.sources=. \
-              -Dsonar.host.url=http://localhost:8203 \
-              -Dsonar.login=admin \
-              -Dsonar.password=admin || {
-                echo "Análise SonarQube falhou"
-                docker stop sonar
-                docker rm sonar
-                exit 1
-              }
-
-            docker stop sonar
-            docker rm sonar
           EOF
+
+      - name: Rodar Sonar Scanner (via Docker)
+        run: |
+          docker run --rm \
+            -v "$(pwd):/usr/src" \
+            sonarsource/sonar-scanner-cli \
+            -Dsonar.projectKey=todo-app \
+            -Dsonar.sources=/usr/src \
+            -Dsonar.host.url=http://201.23.3.86:8203 \
+            -Dsonar.login=admin \
+            -Dsonar.password=admin
 
       - name: Deploy da aplicação no servidor
         run: |
