@@ -1,9 +1,9 @@
 # Node e Angular
-/angular/node_modules
+/frontend/node_modules
 /dist
-/angular/dist
-/server/node_modules
-/angular/.angular
+/frontend/dist
+/backend/node_modules
+/frontend/.angular
 
 # Logs
 *.log
