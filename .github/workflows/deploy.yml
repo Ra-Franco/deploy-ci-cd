@@ -46,6 +46,7 @@ jobs:
           username: aluno
           key: ${{ secrets.SSH_KEY  }}
           script: |
+            docker stop sonarqube && docker rm sonarqube
             docker run -d --name sonarqube -p 8201:9000 sonarqube
             sleep 60  # espera o Sonar subir
             cd ~/app
