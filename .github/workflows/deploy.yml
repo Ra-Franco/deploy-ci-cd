@@ -39,7 +39,7 @@ jobs:
         with:
           host: 201.23.3.86
           username: aluno
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           source: "."
           target: "~/app"
 
@@ -48,7 +48,7 @@ jobs:
         with:
           host: 201.23.3.86
           username: aluno
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             docker run -d --name sonarqube -p 9202:9000 sonarqube
 
@@ -86,7 +86,7 @@ jobs:
         with:
           host: 201.23.3.86
           username: aluno
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           source: "./docker-compose.yml"
           target: "~/app"
           strip_components: 0
@@ -96,7 +96,7 @@ jobs:
         with:
           host: 201.23.3.86
           username: aluno
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             cd ~/app
             docker compose down --remove-orphans || true
