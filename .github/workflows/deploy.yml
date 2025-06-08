@@ -51,17 +51,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             docker run -d --name sonarqube -p 9202:9000 sonarqube
-
-            echo "Esperando SonarQube subir e responder API na porta 9202..."
-            for i in {1..60}; do
-              if curl -s http://localhost:9202/api/server/version | grep -q '^[0-9]\.'; then
-                echo "SonarQube está ativo!"
-                break
-              fi
-              echo "Aguardando SonarQube... $((i*5)) segundos"
-              sleep 5
-            done
-
+            sleep 60
             docker run --rm \
               -v ~/app:/usr/src \
               -w /usr/src \
