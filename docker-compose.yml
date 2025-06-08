@@ -29,6 +29,8 @@ services:
       DB_NAME: todo_db
 
   frontend:
+    depends_on:
+      - backend
     build:
       context: .
       dockerfile: Dockerfile

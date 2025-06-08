@@ -1,4 +1,4 @@
-name: Deploy Docker App to Server
+name: CI/CD Pipeline
 
 on:
   push:
@@ -6,43 +6,41 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do código
+      - name: Checkout do repositório
         uses: actions/checkout@v3
 
       - name: Login no Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Build imagem do backend
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest ./backend
+      - name: Build backend
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest ./backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
 
-      - name: Build imagem do frontend
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest ./frontend
+      - name: Build frontend
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest ./frontend
+          docker push ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
 
-      - name: Push imagem do backend
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
+  sonar-analysis:
+    needs: build-and-push
+    runs-on: ubuntu-latest
 
-      - name: Push imagem do frontend
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
 
-      - name: Configurar chave SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Copiar arquivos para o servidor
+      - name: Copiar código e docker-compose para servidor remoto
         uses: appleboy/scp-action@v0.1.4
         with:
           host: 201.23.3.86
           username: aluno
-          key: ${{ secrets.SSH_KEY }}
-          source: "docker-compose.yml,backend/,frontend/"
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
           target: "~/app"
 
       - name: Executar análise SonarQube no servidor remoto
@@ -50,27 +48,58 @@ jobs:
         with:
           host: 201.23.3.86
           username: aluno
-          key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker stop sonarqube || true && docker rm sonarqube || true
-            docker run -d --name sonarqube -p 8201:9000 sonarqube
-            sleep 60
-            cd ~/app
-            sonar-scanner \
-              -Dsonar.projectKey=meu-projeto \
+            docker run -d --name sonarqube -p 9202:9000 sonarqube
+
+            echo "Esperando SonarQube subir e responder API na porta 9202..."
+            for i in {1..60}; do
+              if curl -s http://localhost:9202/api/server/version | grep -q '^[0-9]\.'; then
+                echo "SonarQube está ativo!"
+                break
+              fi
+              echo "Aguardando SonarQube... $((i*5)) segundos"
+              sleep 5
+            done
+
+            docker run --rm \
+              -v ~/app:/usr/src \
+              -w /usr/src \
+              sonarsource/sonar-scanner-cli \
+              -Dsonar.projectKey=todo-projeto \
               -Dsonar.sources=. \
-              -Dsonar.host.url=http://localhost:8201 \
+              -Dsonar.host.url=http://201.23.3.86:9202 \
               -Dsonar.login=admin \
               -Dsonar.password=admin
             docker stop sonarqube && docker rm sonarqube
 
-      - name: Deploy com Docker Compose
+  deploy:
+    needs: sonar-analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+
+      - name: Copiar docker-compose para servidor remoto
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: 201.23.3.86
+          username: aluno
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "./docker-compose.yml"
+          target: "~/app"
+          strip_components: 0
+
+      - name: Deploy usando docker-compose no servidor remoto
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: 201.23.3.86
           username: aluno
-          key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/app
-            docker compose down || true
+            docker compose down --remove-orphans || true
+            docker pull ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
             docker compose up -d --build
