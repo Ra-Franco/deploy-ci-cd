@@ -30,13 +30,13 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Copiar código e docker-compose para servidor remoto
+      - name: Copiar docker-compose e app para o servidor
         uses: appleboy/scp-action@v0.1.4
         with:
           host: 201.23.3.86
           username: aluno
           key: ${{ secrets.SSH_KEY }}
-          source: "."
+          source: "docker-compose.yml,backend/,frontend/"
           target: "~/app"
 
       - name: Executar análise SonarQube no servidor remoto
@@ -58,11 +58,14 @@ jobs:
               -Dsonar.password=admin
             docker stop sonarqube && docker rm sonarqube
 
-      - name: Deploy da aplicação no servidor
-        run: |
-          ssh -o StrictHostKeyChecking=no aluno@201.23.3.86 << 'EOF'
-            docker stop todo-app || true
-            docker rm todo-app || true
-            docker pull ${{ secrets.DOCKER_USERNAME }}/todo-app:latest
-            docker run -d --name todo-app -p 8204:3000 -p 8205:4200 -p 8202:5432 ${{ secrets.DOCKER_USERNAME }}/todo-app:latest
-          EOF
+      - name: Deploy da aplicação com Docker Compose
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: 201.23.3.86
+          username: aluno
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/app
+            docker compose down || true
+            docker compose pull || true
+            docker compose up -d --build

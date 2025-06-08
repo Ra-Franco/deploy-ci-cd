@@ -1,13 +1,14 @@
-FROM node:18
+FROM node:18 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY angular/ .
 
 RUN npm install
+RUN npm run build
 
-COPY . .
+FROM nginx:alpine
 
-EXPOSE 4200
+COPY --from=build /app/dist /usr/share/nginx/html
 
-CMD ["npm", "start"]
+EXPOSE 80
