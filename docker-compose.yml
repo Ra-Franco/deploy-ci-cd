@@ -36,6 +36,6 @@ services:
       dockerfile: Dockerfile
     container_name: todo-frontend
     ports:
-      - "8205:4200"
+      - "8205:80"
 volumes:
   postgres_data:

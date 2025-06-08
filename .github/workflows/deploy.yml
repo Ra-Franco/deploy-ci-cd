@@ -50,7 +50,7 @@ jobs:
           username: aluno
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker run -d --name sonarqube -p 9202:9000 sonarqube
+            docker run -d --name sonarqube -p 8201:9000 sonarqube
             sleep 60
             docker run --rm \
               -v ~/app:/usr/src \
@@ -58,7 +58,7 @@ jobs:
               sonarsource/sonar-scanner-cli \
               -Dsonar.projectKey=todo-projeto \
               -Dsonar.sources=. \
-              -Dsonar.host.url=http://201.23.3.86:9202 \
+              -Dsonar.host.url=http://201.23.3.86:8201 \
               -Dsonar.login=admin \
               -Dsonar.password=admin
             docker stop sonarqube && docker rm sonarqube
