@@ -10,6 +10,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "8202:5432"
+    restart: unless-stopped
 
   backend:
     build:
@@ -34,3 +35,5 @@ services:
     container_name: todo-frontend
     ports:
       - "8205:80"
+volumes:
+  postgres_data:
