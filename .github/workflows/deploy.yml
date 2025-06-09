@@ -50,7 +50,7 @@ jobs:
           username: aluno
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker run -d --name sonarqube -p 8202:9000 sonarqube
+            docker run -d --name sonarqube -p 8201:9000 sonarqube
             sleep 60
             docker run --rm \
               -v ~/app:/usr/src \
