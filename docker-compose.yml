@@ -14,7 +14,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: todo-backend
     depends_on:
@@ -29,13 +29,17 @@ services:
       DB_NAME: todo_db
 
   frontend:
-    depends_on:
-      - backend
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: todo-frontend
+    depends_on:
+      - backend
     ports:
-      - "8205:80"
+      - "8205:4200"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm", "run", "start", "--", "--host", "0.0.0.0"]
 volumes:
   postgres_data:
