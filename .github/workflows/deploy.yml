@@ -50,7 +50,7 @@ jobs:
           username: aluno
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker run -d --name sonarqube -p 8201:9000 sonarqube
+            docker run -d --name sonarquberamon -p 8201:9000 sonarqube
             sleep 60
             docker run --rm \
               -v ~/app:/usr/src \
@@ -61,7 +61,7 @@ jobs:
               -Dsonar.host.url=http://201.23.3.86:8201 \
               -Dsonar.login=admin \
               -Dsonar.password=admin
-            docker stop sonarqube && docker rm sonarqube
+            docker stop sonarquberamon && docker rm sonarquberamon
 
   deploy:
     needs: sonar-analysis
