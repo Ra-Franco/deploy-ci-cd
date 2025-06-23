@@ -118,7 +118,7 @@ jobs:
             --name todo-backend \
             --network todo-network \
             -e DB_HOST=todo-db \
-            -e DB_PORT=5432 \
+            -e DB_PORT=8202 \
             -e DB_USER=postgres \
             -e DB_PASSWORD=postgres \
             -e DB_NAME=todo_db \
