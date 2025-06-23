@@ -89,7 +89,42 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ~/app
-            docker compose down --remove-orphans || true
+            docker stop todo-frontend todo-backend todo-db || true
+            docker rm todo-frontend todo-backend todo-db || true
+            docker network rm todo-network || true
+            
             docker pull ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
-            docker compose up -d --build
+            
+            docker network create todo-network || true
+            docker volume create postgres_data || true
+            
+            docker run -d \
+              --name todo-db \
+              --network todo-network \
+              -e POSTGRES_USER=postgres \
+              -e POSTGRES_PASSWORD=postgres \
+              -e POSTGRES_DB=todo_db \
+              -v postgres_data:/var/lib/postgresql/data \
+              -p 8202:5432 \
+              --restart unless-stopped \
+              postgres:15
+            
+            sleep 10
+            
+            docker run -d \
+              --name todo-backend \
+              --network todo-network \
+              -e DB_HOST=todo-db \
+              -e DB_PORT=5432 \
+              -e DB_USER=postgres \
+              -e DB_PASSWORD=postgres \
+              -e DB_NAME=todo_db \
+              -p 8204:3000 \
+              ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
+            
+            docker run -d \
+              --name todo-frontend \
+              --network todo-network \
+              -p 8205:4200 \
+              ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
