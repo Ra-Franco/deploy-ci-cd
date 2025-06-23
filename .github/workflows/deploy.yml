@@ -125,7 +125,7 @@ jobs:
             -p 8204:3000 \
             ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
             
-           curl --retry 10 --retry-connrefused --retry-delay 5 http://localhost:3000/api/tarefas || echo "Backend pode não estar disponível ainda."
+           curl --retry 10 --retry-connrefused --retry-delay 5 http://localhost:8204/api/tarefas || echo "Backend pode não estar disponível ainda."
            
            docker run -d \
             --name todo-frontend \
