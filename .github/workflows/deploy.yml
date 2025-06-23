@@ -88,43 +88,47 @@ jobs:
           username: aluno
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd ~/app
-            docker stop todo-frontend todo-backend todo-db || true
-            docker rm todo-frontend todo-backend todo-db || true
-            docker network rm todo-network 2>/dev/null || true
-
-            docker pull ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
+           cd ~/app
             
-            docker network create todo-network || true
-            docker volume create postgres_data || true
+           docker stop todo-frontend todo-backend todo-db || true
+           docker rm todo-frontend todo-backend todo-db || true
+              
+           docker network rm todo-network 2>/dev/null || true
+           
+           docker pull ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
+           docker pull ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
+           
+           docker network create todo-network || true
+           docker volume create postgres_data || true
+           
+           docker run -d \
+            --name todo-db \
+            --network todo-network \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_DB=todo_db \
+            -v postgres_data:/var/lib/postgresql/data \
+            -p 8202:5432 \
+            --restart unless-stopped \
+            postgres:15
+           
+           docker run --rm --network todo-network busybox sh -c 'until nc -z todo-db 5432; do echo "Aguardando banco de dados..."; sleep 2; done;'
+           
+           docker run -d \
+            --name todo-backend \
+            --network todo-network \
+            -e DB_HOST=todo-db \
+            -e DB_PORT=5432 \
+            -e DB_USER=postgres \
+            -e DB_PASSWORD=postgres \
+            -e DB_NAME=todo_db \
+            -p 8204:3000 \
+            ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
             
-            docker run -d \
-              --name todo-db \
-              --network todo-network \
-              -e POSTGRES_USER=postgres \
-              -e POSTGRES_PASSWORD=postgres \
-              -e POSTGRES_DB=todo_db \
-              -v postgres_data:/var/lib/postgresql/data \
-              -p 8202:5432 \
-              --restart unless-stopped \
-              postgres:15
-            
-            sleep 10
-            
-            docker run -d \
-              --name todo-backend \
-              --network todo-network \
-              -e DB_HOST=todo-db \
-              -e DB_PORT=5432 \
-              -e DB_USER=postgres \
-              -e DB_PASSWORD=postgres \
-              -e DB_NAME=todo_db \
-              -p 8204:3000 \
-              ${{ secrets.DOCKER_USERNAME }}/todo-backend:latest
-            
-            docker run -d \
-              --name todo-frontend \
-              --network todo-network \
-              -p 8205:4200 \
-              ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
+           curl --retry 10 --retry-connrefused --retry-delay 5 http://localhost:3000/api/tarefas || echo "Backend pode não estar disponível ainda."
+           
+           docker run -d \
+            --name todo-frontend \
+            --network todo-network \
+            -p 8205:4200 \
+            ${{ secrets.DOCKER_USERNAME }}/todo-frontend:latest
