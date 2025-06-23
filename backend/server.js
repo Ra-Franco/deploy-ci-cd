@@ -14,6 +14,18 @@ const pool = new Pool({
   port: parseInt(process.env.DB_PORT, 10),
 });
 
+async function waitForDB() {
+  while (true) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('Banco de dados disponível');
+      return;
+    } catch (err) {
+      console.log('Tentando conectar ao banco...');
+      await new Promise(res => setTimeout(res, 5000)); // tenta a cada 5 segundos
+    }
+  }
+}
 async function waitForDB(retries = 10, delay = 2000) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -83,7 +95,6 @@ async function startServer() {
     });
   } catch (err) {
     console.error(err);
-    process.exit(1);
   }
 }
 
